@@ -2,6 +2,7 @@ package com.yuqing.ticket_booking.entity;
 
 import jakarta.persistence.*;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,6 +28,9 @@ public class TicketOrder {
 
     @Column(nullable = false)
     private Long eventId;
+
+    @Column(nullable = false)
+    private Long TicketTypeId;
 
     @Column(name = "user_email", nullable = false)
     private String userEmail;
