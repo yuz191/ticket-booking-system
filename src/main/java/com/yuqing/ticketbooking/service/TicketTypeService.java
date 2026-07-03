@@ -1,0 +1,45 @@
+package com.yuqing.ticketbooking.service;
+
+import com.yuqing.ticketbooking.dto.CreateTicketTypeRequest;
+import com.yuqing.ticketbooking.entity.Event;
+import com.yuqing.ticketbooking.entity.TicketType;
+import com.yuqing.ticketbooking.repository.EventRepository;
+import com.yuqing.ticketbooking.repository.TicketTypeRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class TicketTypeService {
+    private final EventRepository eventRepository;
+    private final TicketTypeRepository ticketTypeRepository;
+
+    private TicketTypeService(EventRepository eventRepository, TicketTypeRepository ticketTypeRepository) {
+        this.eventRepository = eventRepository;
+        this.ticketTypeRepository = ticketTypeRepository;
+    }
+
+    public TicketType createTicketType(CreateTicketTypeRequest request) {
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new RuntimeException("Event not found."));
+
+        TicketType ticketType = new TicketType();
+        ticketType.setEventId(event.getId());
+        ticketType.setName(request.getName());
+        ticketType.setPrice(request.getPrice());
+        ticketType.setTotalQuantity(request.getTotalQuantity());
+
+        return ticketTypeRepository.save(ticketType);
+    }
+
+
+    public List<TicketType> getTicketTypesByEventId(Long eventId) {
+        boolean eventExist = eventRepository.existsById(eventId);
+
+        if (!eventExist) {
+            throw new RuntimeException("Event not found.");
+        }
+
+        return ticketTypeRepository.findByEventId(eventId);
+    }
+}

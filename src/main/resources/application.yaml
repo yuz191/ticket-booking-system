@@ -18,3 +18,8 @@ spring:
 
 server:
   port: 8080
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:this-is-a-very-long-secret-key-for-ticket-booking-system-at-least-32-bytes}
+    expiration_ms: ${EXPIRATION_TIME_MS:86400000}
