@@ -2,6 +2,7 @@ package com.yuqing.ticketbooking.config;
 
 import com.yuqing.ticketbooking.security.CustomerUserDetailService;
 import com.yuqing.ticketbooking.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,10 +10,10 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -44,13 +45,16 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("GET", "/api/events/**").permitAll()
-                        .requestMatchers("GET", "/api/events/*/ticket-types").permitAll()
-                        .requestMatchers("POST", "/api/events").permitAll()
-                        .requestMatchers("POST", "/api/ticket-types").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/events/*/ticket-types").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/events").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/ticket-types").permitAll()
                         .requestMatchers("/api/orders/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception -> exception.
+                        authenticationEntryPoint((request, response, authException) ->
+                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized.")))
                 /*
                  * Set the authentication provider
                  * The authentication provider tells Spring Security:

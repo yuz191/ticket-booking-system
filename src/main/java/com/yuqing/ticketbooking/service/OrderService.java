@@ -64,7 +64,7 @@ public class OrderService {
         if (authentication == null ||
                 !authentication.isAuthenticated() ||
                 "anonymousUser".equals(authentication.getName())) {
-            throw new RuntimeException("User is not authenticated");
+            throw new RuntimeException("User is not authenticated.");
         }
 
         return authentication.getName();
