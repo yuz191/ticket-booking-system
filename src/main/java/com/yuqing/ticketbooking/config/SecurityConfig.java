@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/events/*/ticket-types").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/events").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/ticket-types").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/ticket-types/**").permitAll()
                         .requestMatchers("/api/orders/**").authenticated()
                         .anyRequest().authenticated()
                 )

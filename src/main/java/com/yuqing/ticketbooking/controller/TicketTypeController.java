@@ -27,4 +27,9 @@ public class TicketTypeController {
         return ticketTypeService.getTicketTypesByEventId(eventId);
     }
 
+    @GetMapping("/ticket-types/{id}")
+    public TicketType getTicketType(@PathVariable Long id) {
+        return ticketTypeService.getTicketTypeId(id);
+    }
+
 }

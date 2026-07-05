@@ -42,4 +42,9 @@ public class TicketTypeService {
 
         return ticketTypeRepository.findByEventId(eventId);
     }
+
+    public TicketType getTicketTypeId(Long id) {
+        return ticketTypeRepository.findById(id).
+                orElseThrow(() -> new RuntimeException("Ticket type not found."));
+    }
 }
