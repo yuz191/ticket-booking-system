@@ -5,6 +5,8 @@ import com.yuqing.ticketbooking.entity.Event;
 import com.yuqing.ticketbooking.entity.TicketType;
 import com.yuqing.ticketbooking.repository.EventRepository;
 import com.yuqing.ticketbooking.repository.TicketTypeRepository;
+import com.yuqing.ticketbooking.util.RedisKeyUtil;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,10 +15,12 @@ import java.util.List;
 public class TicketTypeService {
     private final EventRepository eventRepository;
     private final TicketTypeRepository ticketTypeRepository;
+    private final StringRedisTemplate stringRedisTemplate;
 
-    private TicketTypeService(EventRepository eventRepository, TicketTypeRepository ticketTypeRepository) {
+    private TicketTypeService(EventRepository eventRepository, TicketTypeRepository ticketTypeRepository, StringRedisTemplate stringRedisTemplate) {
         this.eventRepository = eventRepository;
         this.ticketTypeRepository = ticketTypeRepository;
+        this.stringRedisTemplate = stringRedisTemplate;
     }
 
     public TicketType createTicketType(CreateTicketTypeRequest request) {
@@ -29,7 +33,13 @@ public class TicketTypeService {
         ticketType.setPrice(request.getPrice());
         ticketType.setTotalQuantity(request.getTotalQuantity());
 
-        return ticketTypeRepository.save(ticketType);
+        TicketType savedTicketType = ticketTypeRepository.save(ticketType);
+
+        String stockKey = RedisKeyUtil.ticketTypeStockKey(savedTicketType.getTicketTypeId());
+
+        stringRedisTemplate.opsForValue().set(stockKey, savedTicketType.getAvailableQuantity().toString());
+
+        return savedTicketType;
     }
 
 
