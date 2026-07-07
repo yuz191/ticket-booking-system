@@ -18,44 +18,61 @@ import java.math.BigDecimal;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final TicketTypeRepository ticketTypeRepository;
+    private final RedisStockService redisStockService;
 
-    public OrderService(OrderRepository orderRepository, TicketTypeRepository ticketTypeRepository, EventRepository eventRepository) {
+    public OrderService(OrderRepository orderRepository, TicketTypeRepository ticketTypeRepository, EventRepository eventRepository, RedisStockService redisStockService) {
         this.orderRepository = orderRepository;
         this.ticketTypeRepository = ticketTypeRepository;
+        this.redisStockService = redisStockService;
     }
 
     @Transactional
     public TicketOrder createTicketOrder(CreateOrderRequest request) {
-        String currentUserEmail = getCurrentUserEmail();
-
-        TicketType ticketType = ticketTypeRepository.findById(request.getTicketTypeId())
-                .orElseThrow(() -> new RuntimeException("Ticket type not found"));
-
-        if (!ticketType.getEventId().equals(request.getEventId())) {
-            throw new RuntimeException("Ticket type does not belong to this event.");
-        }
-
-        if (ticketType.getAvailableQuantity() < request.getQuantity()) {
-            throw new RuntimeException("Not enough tickets available");
-        }
-
-        ticketType.setAvailableQuantity(
-                ticketType.getAvailableQuantity() - request.getQuantity()
+        // Redis - reduce stock atomically
+        redisStockService.decreaseStock(
+                request.getTicketTypeId(),
+                request.getQuantity()
         );
 
-        ticketTypeRepository.save(ticketType);
+        try {
+            String currentUserEmail = getCurrentUserEmail();
 
-        TicketOrder ticketOrder = new TicketOrder();
-        ticketOrder.setEventId(request.getEventId());
-        ticketOrder.setTicketTypeId(ticketType.getTicketTypeId());
-        ticketOrder.setQuantity(request.getQuantity());
-        ticketOrder.setUserEmail(currentUserEmail);
-        ticketOrder.setTotalPrice(
-                ticketType.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()))
-        );
-        ticketOrder.setStatus(OrderStatus.CONFIRMED);
+            TicketType ticketType = ticketTypeRepository.findWithLockByTicketTypeId(request.getTicketTypeId())
+                    .orElseThrow(() -> new RuntimeException("Ticket type not found"));
 
-        return orderRepository.save(ticketOrder);
+            if (!ticketType.getEventId().equals(request.getEventId())) {
+                throw new RuntimeException("Ticket type does not belong to this event.");
+            }
+
+            if (ticketType.getAvailableQuantity() < request.getQuantity()) {
+                throw new RuntimeException("Not enough tickets available");
+            }
+
+            ticketType.setAvailableQuantity(
+                    ticketType.getAvailableQuantity() - request.getQuantity()
+            );
+
+            ticketTypeRepository.save(ticketType);
+
+            TicketOrder ticketOrder = new TicketOrder();
+            ticketOrder.setEventId(request.getEventId());
+            ticketOrder.setTicketTypeId(ticketType.getTicketTypeId());
+            ticketOrder.setQuantity(request.getQuantity());
+            ticketOrder.setUserEmail(currentUserEmail);
+            ticketOrder.setTotalPrice(
+                    ticketType.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()))
+            );
+            ticketOrder.setStatus(OrderStatus.CONFIRMED);
+
+            return orderRepository.save(ticketOrder);
+        } catch (RuntimeException ex) {
+            redisStockService.increaseStock(
+                    request.getTicketTypeId(),
+                    request.getQuantity()
+            );
+
+            throw ex;
+        }
     }
 
     private String getCurrentUserEmail() {

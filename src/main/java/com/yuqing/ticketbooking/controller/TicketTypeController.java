@@ -32,4 +32,9 @@ public class TicketTypeController {
         return ticketTypeService.getTicketTypeId(id);
     }
 
+    @GetMapping("/ticket-types/{id}/redis-stock")
+    public Integer getRedisStock(@PathVariable Long id) {
+        return ticketTypeService.getRedisStock(id);
+    }
+
 }

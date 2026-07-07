@@ -16,11 +16,13 @@ public class TicketTypeService {
     private final EventRepository eventRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final StringRedisTemplate stringRedisTemplate;
+    private final RedisStockService redisStockService;
 
-    private TicketTypeService(EventRepository eventRepository, TicketTypeRepository ticketTypeRepository, StringRedisTemplate stringRedisTemplate) {
+    private TicketTypeService(EventRepository eventRepository, TicketTypeRepository ticketTypeRepository, StringRedisTemplate stringRedisTemplate, RedisStockService redisStockService) {
         this.eventRepository = eventRepository;
         this.ticketTypeRepository = ticketTypeRepository;
         this.stringRedisTemplate = stringRedisTemplate;
+        this.redisStockService = redisStockService;
     }
 
     public TicketType createTicketType(CreateTicketTypeRequest request) {
@@ -56,5 +58,9 @@ public class TicketTypeService {
     public TicketType getTicketTypeId(Long id) {
         return ticketTypeRepository.findById(id).
                 orElseThrow(() -> new RuntimeException("Ticket type not found."));
+    }
+
+    public Integer getRedisStock(Long ticketTypeId) {
+        return redisStockService.getStock(ticketTypeId);
     }
 }
