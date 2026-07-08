@@ -21,6 +21,18 @@ spring:
       host: localhost
       port: 6379
 
+  kafka:
+    bootstrap-services: localhost:9092
+    consumer:
+      group-id: ticket-order-consumer-group
+      auto-offset-reset: earliest
+      properties:
+        spring.json.trusted.packages: "com.yuqing.ticketbooking.*"
+      producer:
+        properties:
+          spring.json.add.type.headers: false
+
+
 server:
   port: 8080
 

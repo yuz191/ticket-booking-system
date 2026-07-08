@@ -4,6 +4,8 @@ import com.yuqing.ticketbooking.dto.CreateOrderRequest;
 import com.yuqing.ticketbooking.entity.OrderStatus;
 import com.yuqing.ticketbooking.entity.TicketOrder;
 import com.yuqing.ticketbooking.entity.TicketType;
+import com.yuqing.ticketbooking.messaging.OrderCreatedMessage;
+import com.yuqing.ticketbooking.messaging.OrderProducer;
 import com.yuqing.ticketbooking.repository.EventRepository;
 import com.yuqing.ticketbooking.repository.OrderRepository;
 import com.yuqing.ticketbooking.repository.TicketTypeRepository;
@@ -19,11 +21,13 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final RedisStockService redisStockService;
+    private final OrderProducer orderProducer;
 
-    public OrderService(OrderRepository orderRepository, TicketTypeRepository ticketTypeRepository, EventRepository eventRepository, RedisStockService redisStockService) {
+    public OrderService(OrderRepository orderRepository, TicketTypeRepository ticketTypeRepository, EventRepository eventRepository, RedisStockService redisStockService, OrderProducer orderProducer) {
         this.orderRepository = orderRepository;
         this.ticketTypeRepository = ticketTypeRepository;
         this.redisStockService = redisStockService;
+        this.orderProducer = orderProducer;
     }
 
     @Transactional
@@ -37,22 +41,23 @@ public class OrderService {
         try {
             String currentUserEmail = getCurrentUserEmail();
 
-            TicketType ticketType = ticketTypeRepository.findWithLockByTicketTypeId(request.getTicketTypeId())
+            TicketType ticketType = ticketTypeRepository.findById(request.getTicketTypeId())
                     .orElseThrow(() -> new RuntimeException("Ticket type not found"));
 
             if (!ticketType.getEventId().equals(request.getEventId())) {
                 throw new RuntimeException("Ticket type does not belong to this event.");
             }
 
-            if (ticketType.getAvailableQuantity() < request.getQuantity()) {
-                throw new RuntimeException("Not enough tickets available");
-            }
+//            if (ticketType.getAvailableQuantity() < request.getQuantity()) {
+//                throw new RuntimeException("Not enough tickets available");
+//            }
 
-            ticketType.setAvailableQuantity(
-                    ticketType.getAvailableQuantity() - request.getQuantity()
-            );
-
-            ticketTypeRepository.save(ticketType);
+              // Kafka will reduce available quantity asynchronously
+//            ticketType.setAvailableQuantity(
+//                    ticketType.getAvailableQuantity() - request.getQuantity()
+//            );
+//
+//            ticketTypeRepository.save(ticketType);
 
             TicketOrder ticketOrder = new TicketOrder();
             ticketOrder.setEventId(request.getEventId());
@@ -62,9 +67,22 @@ public class OrderService {
             ticketOrder.setTotalPrice(
                     ticketType.getPrice().multiply(BigDecimal.valueOf(request.getQuantity()))
             );
-            ticketOrder.setStatus(OrderStatus.CONFIRMED);
+            ticketOrder.setStatus(OrderStatus.PENDING);
 
-            return orderRepository.save(ticketOrder);
+            TicketOrder savedOrder =  orderRepository.save(ticketOrder);
+
+            OrderCreatedMessage message = new OrderCreatedMessage(
+                    savedOrder.getId(),
+                    savedOrder.getEventId(),
+                    savedOrder.getTicketTypeId(),
+                    savedOrder.getQuantity(),
+                    savedOrder.getUserEmail()
+            );
+
+            orderProducer.sendOrderCreatedMessage(message);
+
+            return savedOrder;
+
         } catch (RuntimeException ex) {
             redisStockService.increaseStock(
                     request.getTicketTypeId(),
