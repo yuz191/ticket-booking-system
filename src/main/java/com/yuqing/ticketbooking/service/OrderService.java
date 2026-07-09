@@ -4,12 +4,14 @@ import com.yuqing.ticketbooking.dto.CreateOrderRequest;
 import com.yuqing.ticketbooking.entity.OrderStatus;
 import com.yuqing.ticketbooking.entity.TicketOrder;
 import com.yuqing.ticketbooking.entity.TicketType;
+import com.yuqing.ticketbooking.messaging.OrderCreatedEvent;
 import com.yuqing.ticketbooking.messaging.OrderCreatedMessage;
 import com.yuqing.ticketbooking.messaging.OrderProducer;
 import com.yuqing.ticketbooking.repository.EventRepository;
 import com.yuqing.ticketbooking.repository.OrderRepository;
 import com.yuqing.ticketbooking.repository.TicketTypeRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -21,13 +23,15 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final TicketTypeRepository ticketTypeRepository;
     private final RedisStockService redisStockService;
-    private final OrderProducer orderProducer;
+//    private final OrderProducer orderProducer;
+    private final ApplicationEventPublisher eventPublisher;
 
-    public OrderService(OrderRepository orderRepository, TicketTypeRepository ticketTypeRepository, EventRepository eventRepository, RedisStockService redisStockService, OrderProducer orderProducer) {
+    public OrderService(OrderRepository orderRepository, TicketTypeRepository ticketTypeRepository, RedisStockService redisStockService, ApplicationEventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
         this.ticketTypeRepository = ticketTypeRepository;
         this.redisStockService = redisStockService;
-        this.orderProducer = orderProducer;
+//        this.orderProducer = orderProducer;
+        this.eventPublisher = eventPublisher;
     }
 
     @Transactional
@@ -79,7 +83,7 @@ public class OrderService {
                     savedOrder.getUserEmail()
             );
 
-            orderProducer.sendOrderCreatedMessage(message);
+            eventPublisher.publishEvent(new OrderCreatedEvent(message));
 
             return savedOrder;
 
@@ -103,5 +107,10 @@ public class OrderService {
         }
 
         return authentication.getName();
+    }
+
+    public TicketOrder getOrderById(Long id) {
+        return orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
     }
 }
