@@ -3,26 +3,26 @@ spring:
     name: ticket-booking
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/ticket_booking
-    username: ticket_user
-    password: ticket_password
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:ticket_booking}
+    username: ${DB_USERNAME:ticket_user}
+    password: ${DB_PASSWORD:ticket_password}
     driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:true}
     properties:
       hibernate:
-        format_sql: true
+        format_sql: ${JPA_FORMAT_SQL:true}
 
   data:
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     consumer:
       group-id: ticket-order-consumer-group
       auto-offset-reset: earliest
@@ -36,7 +36,7 @@ spring:
 
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 
 app:
   jwt:

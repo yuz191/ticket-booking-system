@@ -1,6 +1,5 @@
 package com.yuqing.ticketbooking.service;
 
-import com.yuqing.ticketbooking.config.SecurityConfig;
 import com.yuqing.ticketbooking.dto.AuthResponse;
 import com.yuqing.ticketbooking.dto.LoginRequest;
 import com.yuqing.ticketbooking.dto.RegisterRequest;
@@ -23,7 +22,7 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
 
 
-    public AuthService(UserRepository userRepository, SecurityConfig securityConfig, PasswordEncoder passwordEncoder, JwtService jwtService, SecurityConfig securityConfig1, AuthenticationManager authenticationManager) {
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;

@@ -1,4 +1,31 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticket-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ticket_booking
+      DB_USERNAME: ticket_user
+      DB_PASSWORD: ticket_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: this-is-a-very-long-secret-key-for-ticket-booking-system-at-least-32-bytes
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
   postgres:
     image: postgres:16
     container_name: ticket-postgres
@@ -10,6 +37,11 @@ services:
       - "5433:5432"
     volumes:
       - ticket_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ticket_user -d ticket_booking"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 
   redis:
@@ -17,6 +49,11 @@ services:
     container_name: ticket-redis
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: apache/kafka:4.1.2
