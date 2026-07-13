@@ -1,0 +1,6 @@
+.git
+.agents
+.idea
+target
+HELP.md
+*.log

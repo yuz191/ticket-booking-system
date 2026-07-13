@@ -1,0 +1,77 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticket-backend-prod
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-ticket_booking}
+      DB_USERNAME: ${DB_USERNAME:-ticket_user}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      EXPIRATION_TIME_MS: ${EXPIRATION_TIME_MS:-86400000}
+      SERVER_PORT: 8080
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JPA_SHOW_SQL: ${JPA_SHOW_SQL:-false}
+      JPA_FORMAT_SQL: ${JPA_FORMAT_SQL:-false}
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16
+    container_name: ticket-postgres-prod
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ticket_booking}
+      POSTGRES_USER: ${DB_USERNAME:-ticket_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - ticket_postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-ticket_user} -d ${DB_NAME:-ticket_booking}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: ticket-redis-prod
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  kafka:
+    image: apache/kafka:4.1.2
+    container_name: ticket-kafka-prod
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    restart: unless-stopped
+
+volumes:
+  ticket_postgres_prod_data:
