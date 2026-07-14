@@ -1,5 +1,7 @@
 # High-Concurrency Ticket Booking System
 
+##### Language: English | [中文](README.zh-CN.md)
+
 A backend ticket booking system built with **Java, Spring Boot, PostgreSQL, Redis, Kafka, and Spring Security**.
 The project simulates a high-concurrency ticket ordering scenario, focusing on inventory consistency, overselling prevention, asynchronous order processing, and JWT-based authentication.
 
