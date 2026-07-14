@@ -240,12 +240,14 @@ The project was tested with Postman for the following flows:
 
 ## Future Improvements
 
-* Implement Transactional Outbox Pattern for more reliable Kafka publishing
-* Add payment workflow and order timeout cancellation
-* Add integration tests with Testcontainers
-* Add API documentation with Swagger / OpenAPI
-* Add CI/CD workflow with GitHub Actions
-* Add monitoring and structured logging
+* Build a unified ticketing master data model for events, venues, sessions, ticket types, channels, and inventory pools, with standardized fields, audit trails, and synchronization workflows
+* Extend ticket type lifecycle management to support listing, delisting, suspension, multi-channel synchronization, and richer status transitions
+* Introduce a configurable strategy engine for purchase limits, risk control, channel quotas, dynamic pricing, and automated rule execution
+* Strengthen message-driven reliability with Kafka idempotent consumption, retry handling, dead-letter queues, compensation workflows, and the Transactional Outbox Pattern
+* Evolve the system toward microservices by splitting order, inventory, event, and strategy domains, and adding Gateway, OpenFeign, and Resilience4j for service governance
+* Add analytics and business enablement capabilities such as operational metrics, reports, alerts, and trend analysis to support decision-making
+* Explore LLM, RAG, and Agent use cases for ticketing operations, such as intelligent Q&A, anomaly analysis, operational recommendations, and automated issue handling
+* Improve engineering maturity with Docker Compose-based multi-service orchestration, CI/CD pipelines, observability, and integration tests with Testcontainers
 
 ## Project Highlights
 

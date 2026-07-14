@@ -240,12 +240,14 @@ docker compose up -d postgres redis kafka kafka-ui
 
 ## 后续可改进方向
 
-* 引入 Transactional Outbox Pattern，提升 Kafka 消息发布可靠性
-* 增加支付流程与订单超时取消机制
-* 使用 Testcontainers 补充集成测试
-* 增加 Swagger / OpenAPI 接口文档
-* 增加 GitHub Actions CI/CD 流程
-* 增加监控与结构化日志
+* 构建统一的票务主数据模型，完善活动、场馆、场次、票种、渠道、库存池等核心对象的标准化管理、审计与同步能力
+* 扩展票种全生命周期管理能力，支持上架、下架、停售、多渠道同步，以及更完整的状态流转管理
+* 建设可配置的策略引擎，支持限购、风控、渠道配额、动态定价等规则的统一配置与自动执行
+* 完善消息驱动架构的可靠性，包括 Kafka 幂等消费、消息重试、死信队列、补偿机制，以及 Transactional Outbox Pattern
+* 推动系统向微服务架构演进，拆分订单、库存、活动、策略等领域服务，并引入 Gateway、OpenFeign、Resilience4j 强化服务治理
+* 增加数据分析与业务赋能能力，沉淀运营指标、报表、告警与趋势分析，支撑业务决策
+* 探索 LLM、RAG、Agent 在票务运营场景中的应用，例如智能问答、异常分析、运营建议与自动化问题处理
+* 提升工程化成熟度，包括基于 Docker Compose 的多服务编排、CI/CD、可观测性建设，以及 Testcontainers 集成测试
 
 ## 项目亮点
 
